@@ -19,11 +19,11 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 def repo():
     http_archive(
         name = "ducc",
-        strip_prefix = "ducc-356d619a4b5f6f8940d15913c14a043355ef23be",
-        sha256 = "d23eb2d06f03604867ad40af4fe92dec7cccc2c59f5119e9f01b35b973885c61",
+        strip_prefix = "ducc-3d28aadfd8bb0219e3df188613dbbcdfffccc3cd",
+        sha256 = "eb044dd11374ed894d67081109d4aa7ed55c29fe3286b116f13db70da6af336c",
         urls = [
-            "https://github.com/mreineck/ducc/archive/356d619a4b5f6f8940d15913c14a043355ef23be.tar.gz",
-            "https://storage.googleapis.com/jax-releases/mirror/ducc/ducc-356d619a4b5f6f8940d15913c14a043355ef23be.tar.gz",
+            "https://github.com/mreineck/ducc/archive/3d28aadfd8bb0219e3df188613dbbcdfffccc3cd.tar.gz",
+            "https://storage.googleapis.com/jax-releases/mirror/ducc/ducc-3d28aadfd8bb0219e3df188613dbbcdfffccc3cd.tar.gz",
         ],
         build_file = "@//third_party/ducc:BUILD.bazel",
     )
