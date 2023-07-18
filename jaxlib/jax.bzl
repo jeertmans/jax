@@ -40,13 +40,32 @@ mosaic_internal_users = []
 jax_test_util_visibility = []
 loops_visibility = []
 
+_py_deps = {
+    "absl/logging": ["@pypi_absl//:pkg"],
+    "absl/testing": ["@pypi_absl//:pkg"],
+    "cloudpickle": ["@pypi_cloudpickle//:pkg"],
+    "colorama": ["@pypi_colorama//:pkg"],
+    "epath": ["@pypi_epath//:pkg"],
+    "hypothesis": ["@pypi_hypothesis//:pkg"],
+    "matplotlib": ["@pypi_matplotlib//:pkg"],
+    "opt_einsum": ["@pypi_opt_einsum//:pkg"],
+    "pil": ["@pypi_pil//:pkg"],
+    "portpicker": ["@pypi_portpicker//:pkg"],
+    "ml_dtypes": ["@pypi_ml_dtypes//:pkg"],
+    "numpy": ["@pypi_numpy//:pkg"],
+    "scipy": ["@pypi_scipy//:pkg"],
+    "tensorflow_core": ["@pypi_tensorflow//:pkg"],
+    "torch": ["@pypi_torch//:pkg"],
+    "zstandard": ["@pypi_zstandard//:pkg"],
+}
+
 def py_deps(_package):
     """Returns the Bazel deps for Python package `package`."""
 
     # We assume the user has installed all dependencies in their Python environment.
     # This indirection exists because in Google's internal build we build
     # dependencies from source with Bazel, but that's not something most people would want.
-    return []
+    return _py_deps[package]
 
 def jax_visibility(_target):
     """Returns the additional Bazel visibilities for `target`."""
