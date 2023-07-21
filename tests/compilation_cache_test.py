@@ -264,6 +264,42 @@ class CompilationCacheTest(jtu.JaxTestCase):
         files_in_cache = len(os.listdir(tmpdir))
         self.assertEqual(files_in_cache, 1)
 
+  def test_cache_saving_metric(self):
+    with tempfile.TemporaryDirectory() as tmpdir, persistent_cache_min_compile_time_secs(
+        2):
+      cc.initialize_cache(tmpdir)
+
+      durations = {}  # Map metric name to time duration.
+      def append_metric_duration(metric, duration):
+        if metric not in durations:
+          durations[metric] = 0.
+        durations[metric] += duration
+
+      jax.monitoring.register_event_duration_secs_listener(
+          append_metric_duration)
+
+      # Mock time to create a short compilation time, no cache saved, no cache
+      # hit, no metric recorded.
+      with mock.patch("time.monotonic", side_effect=np.arange(0, 1, 0.1)):
+        jit(lambda x: x + 1)(1)
+
+      jit(lambda x: x + 1)(1)
+      self.assertNotIn(
+          "/jax/compilation_cache/cache_retrieval_time_sec", durations)
+      self.assertNotIn(
+          "/jax/compilation_cache/compile_time_saved_sec", durations)
+
+      # Mock time to create a long compilation time, metrics increamented with a
+      # cache hit.
+      with mock.patch("time.monotonic", side_effect=np.arange(0, 100, 10)):
+        jit(lambda x: x + 2)(1)
+
+      jit(lambda x: x + 2)(1)
+      self.assertGreater(
+          durations["/jax/compilation_cache/cache_retrieval_time_sec"], 0)
+      self.assertGreater(
+          durations["/jax/compilation_cache/original_compile_time_saved_sec"],
+          0)
 
 if __name__ == "__main__":
   absltest.main(testLoader=jtu.JaxTestLoader())

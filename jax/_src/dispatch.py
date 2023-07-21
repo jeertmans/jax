@@ -499,13 +499,20 @@ def compile_or_get_cached(backend, computation: ir.Module, devices: np.ndarray,
   cache_key = compilation_cache.get_cache_key(
       computation, devices, compile_options, backend)
 
-  executable, compile_time_retrieved = _cache_read(
+  cache_retrieval_start = time.monotonic()
+  executable_retrieved, compile_time_retrieved = _cache_read(
       module_name, cache_key, compile_options, backend)
-  if executable is not None:
-    # TODO(b/289098047): Will instrument a metric which uses the 'compile_time'
-    # to measure the savings due to the cache hit.
+  cache_retrieval_time = time.monotonic() - cache_retrieval_start
+  if executable_retrieved is not None and compile_time_retrieved is not None:
     logger.info("Persistent compilation cache hit for '%s'", module_name)
-    return executable
+    record_event_duration_secs(
+        "/jax/compilation_cache/cache_retrieval_time_sec", cache_retrieval_time)
+    # TODO(b/293308239) Remove this metric after the new compilation cache key
+    # implementation is rolled out.
+    record_event_duration_secs(
+        "/jax/compilation_cache/original_compile_time_saved_sec",
+        compile_time_retrieved - cache_retrieval_time)
+    return executable_retrieved
   else:
     start_time = time.monotonic()
     executable = backend_compile(backend, computation,
