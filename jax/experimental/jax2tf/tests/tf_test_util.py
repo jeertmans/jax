@@ -39,7 +39,7 @@ from tensorflow.compiler.tf2xla.python import xla as tfxla  # type: ignore[impor
 
 DType = Any
 
-def _make_tf_input_signature(*tf_args) -> list[tf.TensorSpec]:
+def make_tf_input_signature(*tf_args) -> list[tf.TensorSpec]:
   # tf_args can be PyTrees
   def _make_one_array_signature(tf_arg):
     return tf.TensorSpec(np.shape(tf_arg), jax2tf.dtype_of_val(tf_arg))
@@ -54,7 +54,7 @@ def _run_tf_function(func_tf: Callable, *tf_args, mode: str):
         func_tf,
         autograph=False,
         # Note that jit_compile defaults to True on TPU and False elsewhere
-        input_signature=_make_tf_input_signature(*tf_args))(*tf_args)  # GRAPH
+        input_signature=make_tf_input_signature(*tf_args))(*tf_args)  # GRAPH
   elif mode == "compiled":
     # Adding an explicit input_signature prevents TF from constant-folding
     # the computation eagerly before compilation
@@ -62,7 +62,7 @@ def _run_tf_function(func_tf: Callable, *tf_args, mode: str):
         func_tf,
         autograph=False,
         jit_compile=True,
-        input_signature=_make_tf_input_signature(*tf_args))(
+        input_signature=make_tf_input_signature(*tf_args))(
             *tf_args)  # COMPILED
   else:
     assert False, (
@@ -321,7 +321,7 @@ class JaxToTfTestCase(jtu.JaxTestCase):
                      self._testMethodName,
                      jax_lowered.compiler_ir(dialect="hlo").as_hlo_text())  # type: ignore
 
-        tf_args_signature = _make_tf_input_signature(*args)
+        tf_args_signature = make_tf_input_signature(*args)
         # If we give the signature, we cannot pass scalars
         tf_args_no_scalars = tuple(
             map(lambda a, sig: tf.convert_to_tensor(a, dtype=sig.dtype),
