@@ -94,6 +94,11 @@ _ROCM_VISIBLE_DEVICES = jax_config.DEFINE_string(
     'comma-separate list of integer device IDs.')
 
 
+# Will be monkeypatched with the function that gets the XLA-AutoFDO profile
+# version. The default (-1) takes care of errors.
+get_latest_profile_version: Optional[Callable[[], int]] = lambda: -1
+
+
 def get_compile_options(
     num_replicas: int,
     num_partitions: int,
@@ -171,12 +176,35 @@ def get_compile_options(
     debug_options.xla_gpu_cuda_data_dir = lib.cuda_path
 
   if _DISABLE_MOST_OPTIMIZATIONS.value:
-
     debug_options.xla_backend_optimization_level = 0
     debug_options.xla_llvm_disable_expensive_passes = True
     debug_options.xla_test_all_input_layouts = False
 
-  compile_options.profile_version = _XLA_PROFILE_VERSION.value
+  # XLA-AutoFDO profile version: precedence order is:
+  # 1. Whatever --jax_xla_profile_version is set to.
+  # 2. If --jax_xla_profile_version is not set (i.e., 0), call the function
+  #    set in get_latest_profile_version and use the return value if non-zero.
+  # If the function returns 0, set -1; this is an error. -1 indicates that no
+  # attempt should be made to retrieve the latest profile later on.
+  jax_xla_profile_version = _XLA_PROFILE_VERSION.value
+  if jax_xla_profile_version > 0:
+    compile_options.profile_version = jax_xla_profile_version
+    logger.debug("get_compile_options XLA-AutoFDO profile: " +
+                 "using JAX XLA profile version %d from flag",
+                 jax_xla_profile_version)
+  else:
+    fdo_profile_version = get_latest_profile_version()
+    logger.info("fdo_profile_version: %d", fdo_profile_version)
+    if fdo_profile_version != 0:
+      compile_options.profile_version = fdo_profile_version
+      logger.debug("get_compile_options XLA-AutoFDO profile: " +
+                   "using XLA-AutoFDO profile version %d",
+                   fdo_profile_version)
+    else:
+      compile_options.profile_version = -1
+      logger.debug("get_compile_options XLA-AutoFDO profile: " +
+                   "XLA-AutoFDO profile version is 0; this should not happen")
+
   return compile_options
 
 

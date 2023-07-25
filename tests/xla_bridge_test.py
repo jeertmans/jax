@@ -59,6 +59,39 @@ class XlaBridgeTest(jtu.JaxTestCase):
           compile_options.executable_build_options.fdo_profile, "test_profile"
       )
 
+  def test_autofdo_profile(self):
+    # --jax_xla_profile_version takes precedence.
+    FLAGS.jax_xla_profile_version = 1
+    xb.get_latest_profile_version = lambda: 2
+    self.assertEqual(
+        xb.get_compile_options(
+            num_replicas=3, num_partitions=4
+        ).profile_version,
+        1,
+    )
+
+    # Use whatever non-zero value the function get_latest_profile_version
+    # returns if --jax_xla_profile_version is not set.
+    FLAGS.jax_xla_profile_version = 0
+    xb.get_latest_profile_version = lambda: 1
+    self.assertEqual(
+        xb.get_compile_options(
+            num_replicas=3, num_partitions=4
+        ).profile_version,
+        1,
+    )
+
+    # If the function returns 0, something is wrong, so expect that we set
+    # profile_version to -1 instead to ensure that no attempt is made to
+    # retrieve the latest profile later.
+    xb.get_latest_profile_version = lambda: 0
+    self.assertEqual(
+        xb.get_compile_options(
+            num_replicas=3, num_partitions=4
+        ).profile_version,
+        -1,
+    )
+
   def test_parameter_replication_default(self):
     c = xc.XlaBuilder("test")
     _ = xla.parameter(c, 0, xc.Shape.array_shape(xc.PrimitiveType.F32, ()))
