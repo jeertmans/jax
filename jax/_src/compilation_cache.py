@@ -35,6 +35,7 @@ from jax._src.lib.mlir import ir
 logger = logging.getLogger(__name__)
 
 _cache: Optional[CacheInterface] = None
+_using_cache: bool = False
 
 
 def initialize_cache(path):
@@ -129,6 +130,15 @@ def reset_cache():
   assert is_initialized()
   logger.info("Resetting cache at %s.", _cache._path)
   _cache = None
+
+
+def set_using_cache():
+  global _using_cache
+  _using_cache = True
+
+
+def is_using_cache():
+  return _using_cache
 
 
 def combine_executable_and_time(

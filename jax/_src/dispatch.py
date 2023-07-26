@@ -53,7 +53,7 @@ from jax._src.interpreters import xla
 from jax._src.interpreters import pxla
 from jax._src.lib.mlir import ir
 from jax._src.lib import xla_client as xc
-from jax._src.monitoring import record_event_duration_secs
+from jax._src.monitoring import record_event, record_event_duration_secs
 from jax._src.partition_spec import PartitionSpec
 from jax._src.sharding import Sharding
 from jax._src.sharding_impls import (
@@ -496,6 +496,9 @@ def compile_or_get_cached(backend, computation: ir.Module, devices: np.ndarray,
     return backend_compile(backend, computation, compile_options,
                            host_callbacks)
 
+  if not compilation_cache.is_using_cache():
+    compilation_cache.set_using_cache()
+    record_event('/jax/compilation_cache/tasks_using_cache')
   cache_key = compilation_cache.get_cache_key(
       computation, devices, compile_options, backend)
 

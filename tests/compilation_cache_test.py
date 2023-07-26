@@ -42,6 +42,18 @@ config.parse_flags_with_absl()
 FLAGS = config.FLAGS
 
 FAKE_COMPILE_TIME = 10
+_events = []
+_counts = {}  # Map event name to count
+
+
+def setUpModule():
+  def increment_event_count(event):
+    if event not in _counts:
+      _counts[event] = 0
+    _counts[event] += 1
+
+  jax.monitoring.register_event_listener(_events.append)
+  jax.monitoring.register_event_listener(increment_event_count)
 
 
 @jtu.with_config(
@@ -264,6 +276,17 @@ class CompilationCacheTest(jtu.JaxTestCase):
         files_in_cache = len(os.listdir(tmpdir))
         self.assertEqual(files_in_cache, 1)
 
+  def test_task_use_cache_metric(self):
+    with tempfile.TemporaryDirectory() as tmpdir:
+      cc.initialize_cache(tmpdir)
+
+      jit(lambda x: x + 1)(1)
+      cc.reset_cache()
+      self.assertEqual(_counts["/jax/compilation_cache/tasks_using_cache"], 1)
+
+      cc.initialize_cache(tmpdir)
+      jit(lambda x: x + 3)(3)
+      self.assertEqual(_counts["/jax/compilation_cache/tasks_using_cache"], 1)
 
 if __name__ == "__main__":
   absltest.main(testLoader=jtu.JaxTestLoader())
