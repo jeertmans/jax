@@ -8,6 +8,9 @@ Remember to align the itemized text with the first line of an item within a list
 
 ## jax 0.4.15
 
+* Breaking changes
+  * `JAX_USE_PJRT_C_API_ON_TPU` no longer has an effect (i.e. it always defaults to true).
+
 ## jaxlib 0.4.15
 
 ## jax 0.4.14 (July 27, 2023)
