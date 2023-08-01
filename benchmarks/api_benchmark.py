@@ -436,6 +436,9 @@ def _sparse_bcoo_fromdense(state, jit: bool = False, compile: bool = False):
 
   if compile:
     while state:
+      state.pause_timing()
+      jax.clear_caches()
+      state.resume_timing()
       f.lower(mat).compile()
   else:
     f(mat).block_until_ready()
@@ -474,6 +477,9 @@ def _sparse_bcoo_todense(state, jit: bool = False, compile: bool = False):
 
   if compile:
     while state:
+      state.pause_timing()
+      jax.clear_caches()
+      state.resume_timing()
       f.lower(mat).compile()
   else:
     f(mat).block_until_ready()
@@ -510,6 +516,9 @@ def _sparse_bcoo_matvec(state, jit: bool = False, compile: bool = False):
 
   if compile:
     while state:
+      state.pause_timing()
+      jax.clear_caches()
+      state.resume_timing()
       f.lower(mat, vec).compile()
   else:
     f(mat, vec).block_until_ready()
